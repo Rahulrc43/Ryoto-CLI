@@ -1,0 +1,23 @@
+- [x] Pass 1 — Safety & Hardening
+  - [x] `commands/startup.js`: Escape registry paths and startup names using temp files/parameters
+  - [x] `commands/wifi.js`: Escape profile name using temp files/parameters & remove padRight monkey-patch
+  - [x] `commands/git.js`: Escape repoPath inside PowerShell executions
+  - [x] `commands/scan.js`: Parse actual Defender scan outputs to detect threat results
+  - [x] `index.js`: Isolate registerCommands file loading with per-file try/catch blocks
+  - [x] `index.js`: Register uncaughtException/unhandledRejection terminal restore listeners
+- [x] Pass 2 — Functional Bug Fixes
+  - [x] `index.js`: Let menu executeAction support options/flags prompts
+  - [x] `index.js`: Dynamically load CLI version from package.json
+  - [x] `commands/info.js`: Dynamic RAM hardware queries
+  - [x] `commands/network.js`: Dynamic active interface adapter alias queries
+  - [x] `commands/benchmark.js`: Chunk CPU loop using setImmediate & flush disk test file
+  - [x] `commands/snapshot.js`: Safe JSON parsing & scalar-to-array normalization
+  - [x] `commands/uninstall.js`: Strict regex boundaries for MSI arg replace
+  - [x] `index.js`: Register SIGINT Ctrl+C signals for active subprocess cleanups
+- [x] Pass 3 — Dedup & Helpers
+  - [x] Migrate `advisor.js`, `clean.js`, and `export.js` to runPowerShellCapture
+  - [x] Extract platform guards, y/n prompts, and progress-bar animations to shared helpers
+  - [x] Standardize all user-facing console strings to "Ryoto"
+- [x] Pass 4 — Packaging & Distribution Polish
+  - [x] Add `.gitignore` & `LICENSE`
+  - [x] Update `package.json` with author/keywords and `"files"` publish whitelist

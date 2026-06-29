@@ -1,0 +1,32 @@
+{
+  "name": "@rahulrc48/ryoto",
+  "version": "1.1.4",
+  "description": "Interactive System Maintenance CLI tool",
+  "main": "index.js",
+  "type": "commonjs",
+  "bin": {
+    "ryoto": "index.js"
+  },
+  "files": [
+    "index.js",
+    "config.js",
+    "lib/",
+    "commands/",
+    "install.bat",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "system",
+    "optimizer",
+    "diagnostics",
+    "maintenance",
+    "cli",
+    "windows"
+  ],
+  "author": "Rahul <rc7926422@gmail.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
