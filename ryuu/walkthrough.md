@@ -73,7 +73,7 @@ This document logs the successful execution of all four passes outlined in the s
 
 ### v1.1.7 Roadmap & Integration Backlog (Active)
 * Upcoming features under development:
-  * Google Gemini Codebase Assistant (`/ask`)
+  * Google Gemini & NVIDIA Codebase Assistant (`/ask`)
   * Python Environment & Package Advisor (`/python`)
   * Zero-Dependency NPM Auto-Updater Check
   * Tiny Arguments Parser

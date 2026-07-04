@@ -29,8 +29,8 @@
     - [ ] Check if `git remote` exists before attempting push.
     - [ ] Warn if no remote is configured, offer to link origin URL (`git remote add origin`).
     - [ ] Support local-only committing fallback.
-  - [ ] `commands/ask.js`: Google Gemini Codebase Assistant (`/ask`)
-    - [ ] Prompt and securely store Gemini API key in `~/.ryoto/.gemini-key`.
+  - [ ] `commands/ask.js`: Google Gemini & NVIDIA Codebase Assistant (`/ask`)
+    - [ ] Prompt and securely store Gemini/NVIDIA API keys in local config files.
     - [ ] Scan and compile local workspace text files (excluding `node_modules` and `.git`).
     - [ ] Send codebase files as context (leveraging Gemini's massive 2M context window for a zero-setup local RAG).
     - [ ] Create an interactive query loop to ask questions, explain code, or request refactoring.
