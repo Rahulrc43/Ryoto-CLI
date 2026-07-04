@@ -1,8 +1,54 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 const { HOLDING_DIR } = require('../config');
+
+// Retrieve or generate a persistent local secret key for signing backup manifests
+function getVaultSecretKey() {
+  const keyPath = path.join(os.homedir(), '.ryoto', '.vault-key');
+  try {
+    if (fs.existsSync(keyPath)) {
+      return fs.readFileSync(keyPath, 'utf8').trim();
+    }
+    const newKey = crypto.randomBytes(32).toString('hex');
+    fs.mkdirSync(path.dirname(keyPath), { recursive: true });
+    // Write key file with standard owner-only permissions on Windows/UNIX
+    fs.writeFileSync(keyPath, newKey, { encoding: 'utf8', mode: 0o600 });
+    return newKey;
+  } catch (e) {
+    // Fallback static key if writing is disabled (least privilege fallback)
+    return 'fallback-static-vault-signature-key-928374';
+  }
+}
+
+// Generate signature for mapInfo object (excluding the signature field itself)
+function signMapInfo(mapInfo) {
+  const secret = getVaultSecretKey();
+  const rawData = JSON.stringify({ ...mapInfo, signature: undefined });
+  return crypto.createHmac('sha256', secret).update(rawData).digest('hex');
+}
+
+// Verify signature of mapInfo object
+function verifyMapInfo(mapInfo) {
+  if (!mapInfo || !mapInfo.signature) return false;
+  const secret = getVaultSecretKey();
+  const rawData = JSON.stringify({ ...mapInfo, signature: undefined });
+  const expected = crypto.createHmac('sha256', secret).update(rawData).digest('hex');
+  return mapInfo.signature === expected;
+}
+
+// Helper to sign and write map.json
+function saveBackupManifest(sessionHoldingDir, mapInfo) {
+  const signature = signMapInfo(mapInfo);
+  const signedMapInfo = { ...mapInfo, signature };
+  fs.writeFileSync(
+    path.join(sessionHoldingDir, 'map.json'),
+    JSON.stringify(signedMapInfo, null, 2),
+    'utf8'
+  );
+}
 
 // Safe file/folder moving with volume cross-device fallback, moving directory as a unit first
 function moveToHolding(srcPath, destDir, mapInfo) {
@@ -56,6 +102,13 @@ function listBackups() {
       if (fs.existsSync(mapPath)) {
         try {
           const mapInfo = JSON.parse(fs.readFileSync(mapPath, 'utf8'));
+          
+          // Auto-sign legacy backups created without a signature
+          if (!mapInfo.signature) {
+            saveBackupManifest(path.join(HOLDING_DIR, f), mapInfo);
+            mapInfo.signature = signMapInfo(mapInfo); // local update for listing integrity
+          }
+
           list.push({
             folder: f,
             timestamp: mapInfo.timestamp || f,
@@ -121,6 +174,13 @@ function restoreBackup(backupFolderName) {
   } catch (err) {
     return 0; // Return 0 if map.json is corrupted
   }
+
+  // Strict cryptographic signature validation to prevent backup tampering
+  if (!verifyMapInfo(mapInfo)) {
+    console.error(`\n\x1b[31m[SECURITY ERROR] Backup snapshot integrity check failed!`);
+    console.error(`The manifest map.json signature is invalid or has been tampered with.\x1b[0m\n`);
+    return 0;
+  }
   
   // Specific restore logic for PATH Environment variables
   if (mapInfo.type === 'env' || mapInfo.category === 'PATH Backup') {
@@ -174,6 +234,16 @@ function restoreBackup(backupFolderName) {
               New-Item -Path (Split-Path $data.path) -Name (Split-Path $data.path -Leaf) -Force -ErrorAction SilentlyContinue | Out-Null
           }
           Set-ItemProperty -Path $data.path -Name $data.name -Value $data.value -Force -ErrorAction Stop
+          
+          # Delete StartupApproved override if exists
+          $approvedPath = if ($data.path -like "*HKLM*") {
+              "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run"
+          } else {
+              "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run"
+          }
+          if (Test-Path $approvedPath) {
+              Remove-ItemProperty -Path $approvedPath -Name $data.name -Force -ErrorAction SilentlyContinue
+          }
         `], { encoding: 'utf8' });
         
         if (res.status !== 0 || res.error) {
@@ -197,6 +267,19 @@ function restoreBackup(backupFolderName) {
             fs.mkdirSync(path.dirname(f.original), { recursive: true });
             fs.renameSync(f.current, f.original);
             restoredCount++;
+            
+            // Delete StartupApproved\StartupFolder override if exists
+            const name = path.basename(f.original);
+            const isCommon = f.original.toLowerCase().includes('programdata') || f.original.toLowerCase().includes('all users');
+            const approvedPath = isCommon ? 
+                "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\StartupFolder" :
+                "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\StartupFolder";
+            
+            spawnSync('powershell', ['-NoProfile', '-Command', `
+              if (Test-Path "${approvedPath}") {
+                  Remove-ItemProperty -Path "${approvedPath}" -Name "${name}" -Force -ErrorAction SilentlyContinue
+              }
+            `]);
           }
         } catch (err) {
           if (err.code === 'EXDEV') {
@@ -269,5 +352,6 @@ module.exports = {
   moveToHolding,
   listBackups,
   restoreBackup,
-  clearExpiredHoldings
+  clearExpiredHoldings,
+  saveBackupManifest
 };

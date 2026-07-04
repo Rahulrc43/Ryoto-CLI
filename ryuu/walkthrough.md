@@ -46,3 +46,25 @@ This document logs the successful execution of all four passes outlined in the s
   Loaded: uninstall.js
   Loaded: wifi.js
   ```
+
+---
+
+### v1.1.5 Security Patch & Interface Animations
+* **HMAC SHA-256 Signatures:** Added persistent machine-unique vault keys to cryptographically sign all `map.json` backup manifests at creation time.
+* **Tamper Verification:** Added verification checks in `restoreBackup()` to reject any restore operation if a manifest's signature is invalid or modified.
+* **Auto-Signing Bridge:** Integrated transparent legacy migration in `listBackups()` to seamlessly auto-sign older, unsigned backups from previous installs using the user's local key.
+* **Live Cyber Cipher Banner Animation:** Integrated a dynamic key-scrambling encrypting/decrypting banner animation directly inside the welcome box on the main interactive menu screen.
+* **Encrypting (Masking) Animation:** Original saved profiles in `/wifi` draw passwords starting as randomized matrix character strings that settle step-by-step into masked `•••••• [Masked]` items.
+* **Decrypting (Revealing) Animation:** Plain-text passwords reveal left-to-right with visual flickering character cycles, locking in decrypted values character-by-character.
+
+---
+
+### v1.1.6 Native Registry Persistence & Safeties (Active)
+* **Native Startup Override:** Swapped startup deletions for standard Windows Explorer `StartupApproved` override registry entries (`{03, 00, ...}` binary flags) to natively block boot execution without deleting the app's keys, preventing self-healing re-writes.
+* **Uninstaller Safe Parameter Execution:** Configured safe `Start-Process` branching in `uninstall.js` to execute uninstallers without arguments (like Cisco Packet Tracer) cleanly without throwing PowerShell binding exceptions.
+* **Trim/Split Null-Safeties:** Implemented defensive input validation in `doctor.js` and `wifi.js` to safeguard `.Trim()` and split delimiters against null pointer runtime errors.
+* **Microsoft Malicious Software Removal Tool (MRT) Integration:** Reconfigured the `/scan` command to provide users with a menu of options: standard background Windows Defender quick scan, interactive MRT GUI window launcher, or background quiet MRT scan.
+* **Open Ports Process Termination:** Added an interactive option to the `/ports` scan command that allows developers to enter a specific port number and terminate the owning background process automatically (with built-in UAC permission error handling).
+* **Open Ports Security Flagging:** Integrated a dictionary of high-risk/suspicious ports (such as RDP 3389, SMB 445, Metasploit 4444, Back Orifice 31337, etc.) directly into `/ports` to automatically highlight them in yellow/red warnings and provide recommendations.
+* **System Process Safety Blocks:** Implemented strict safety rules in `/ports` to block users from terminating critical Windows components (such as PID 4 System, PID 0 Idle, or services like svchost, lsass, wininit, csrss, smss), eliminating any chance of accidental Blue Screens (BSOD) or reboots.
+* **Static Import Registry:** Transitioned the core module loader in `index.js` to a static import registry to clear dynamic loading alerts on security analyzers (Socket.dev).

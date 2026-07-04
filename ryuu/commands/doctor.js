@@ -39,7 +39,7 @@ module.exports = {
                 Command = $cmd
                 Name = $displayName
                 Status = $status
-                Version = $ver.Trim()
+                Version = if ($ver -ne $null) { $ver.ToString().Trim() } else { "" }
                 WinGetId = $winGetId
             }
         }

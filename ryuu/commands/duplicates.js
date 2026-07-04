@@ -3,7 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
 const { loadConfig, HOLDING_DIR } = require('../config');
-const { moveToHolding } = require('../lib/vault');
+const { moveToHolding, saveBackupManifest } = require('../lib/vault');
 const stats = require('../lib/stats');
 const { checkPlatform, confirmAction, drawProgressBar } = require('../lib/helpers');
 
@@ -185,7 +185,7 @@ module.exports = {
       });
 
       // Write map.json
-      fs.writeFileSync(path.join(sessionHoldingDir, 'map.json'), JSON.stringify(mapInfo, null, 2), 'utf8');
+      saveBackupManifest(sessionHoldingDir, mapInfo);
 
       // Update statistics
       stats.freedMB += parseFloat(wastedMB);

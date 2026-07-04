@@ -94,6 +94,10 @@ module.exports = {
         const prev = lastTrends[lastTrends.length - 1];
         const diff = prev.freePct - freePct;
         if (diff > 0.5) {
+          if (!storageAlert) {
+            storageAlert = `    ${context.esc.yellow}${context.esc.bold}[INFO] Storage Utilization Alert:${context.esc.reset}\n`;
+            storageAlert += `    Your free disk space is currently healthy at ${freePct}%, but it is decreasing.`;
+          }
           storageAlert += `\n    ${context.esc.dim}(Note: Your free disk space decreased by ${diff.toFixed(1)}% since your last check).${context.esc.reset}`;
         }
       }
@@ -143,6 +147,10 @@ module.exports = {
         const prev = lastTrends[lastTrends.length - 1];
         const diff = tempMB - prev.tempMB;
         if (diff > 100) {
+          if (!tempAlert) {
+            tempAlert = `    ${context.esc.yellow}${context.esc.bold}[INFO] Rapid Temp Cache Growth:${context.esc.reset}\n`;
+            tempAlert += `    Your temporary cache is currently small (${tempMB.toFixed(1)} MB), but it is growing quickly.`;
+          }
           tempAlert += `\n    ${context.esc.dim}(Note: Your temporary cache grew by ${diff.toFixed(1)} MB since your last check).${context.esc.reset}`;
         }
       }

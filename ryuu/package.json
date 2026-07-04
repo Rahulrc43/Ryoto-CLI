@@ -1,6 +1,6 @@
 {
   "name": "@rahulrc48/ryoto",
-  "version": "1.1.4",
+  "version": "1.1.6",
   "description": "Interactive System Maintenance CLI tool",
   "main": "index.js",
   "type": "commonjs",
@@ -26,6 +26,14 @@
   ],
   "author": "Rahul <rc7926422@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rahulrc43/Ryoto-CLI.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Rahulrc43/Ryoto-CLI/issues"
+  },
+  "homepage": "https://github.com/Rahulrc43/Ryoto-CLI#readme",
   "engines": {
     "node": ">=16.0.0"
   }

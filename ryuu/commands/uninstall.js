@@ -119,7 +119,11 @@ module.exports = {
               }
               
               # Run binary directly via Start-Process (avoids shell cmd.exe injection vectors)
-              Start-Process -FilePath $exe -ArgumentList $args -Wait -NoNewWindow -ErrorAction Stop
+              if ($args -and $args.Trim() -ne "") {
+                  Start-Process -FilePath $exe -ArgumentList $args -Wait -NoNewWindow -ErrorAction Stop
+              } else {
+                  Start-Process -FilePath $exe -Wait -NoNewWindow -ErrorAction Stop
+              }
           } else {
               Write-Error "Failed to parse uninstall string."
           }

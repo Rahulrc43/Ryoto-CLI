@@ -2,7 +2,7 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const { HOLDING_DIR, loadConfig } = require('../config');
-const { moveToHolding, listBackups, restoreBackup, clearExpiredHoldings } = require('../lib/vault');
+const { moveToHolding, listBackups, restoreBackup, clearExpiredHoldings, saveBackupManifest } = require('../lib/vault');
 const stats = require('../lib/stats');
 const { runPowerShellCapture } = require('../lib/shell');
 
@@ -119,7 +119,7 @@ module.exports = {
       });
 
       // Write mapping map.json
-      fs.writeFileSync(path.join(sessionHoldingDir, 'map.json'), JSON.stringify(mapInfo, null, 2), 'utf8');
+      saveBackupManifest(sessionHoldingDir, mapInfo);
 
       // 2. PowerShell background deletion for temp caches
       let deleteCommands = "";

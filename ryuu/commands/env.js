@@ -3,6 +3,7 @@ const os = require('os');
 const path = require('path');
 const { runPowerShellCapture } = require('../lib/shell');
 const { HOLDING_DIR } = require('../config');
+const { saveBackupManifest } = require('../lib/vault');
 
 module.exports = {
   name: '/env',
@@ -90,12 +91,12 @@ module.exports = {
       const backupDir = path.join(HOLDING_DIR, `env-${timestamp}`);
       fs.mkdirSync(backupDir, { recursive: true });
       fs.writeFileSync(path.join(backupDir, 'path-backup.txt'), result, 'utf8');
-      fs.writeFileSync(path.join(backupDir, 'map.json'), JSON.stringify({ 
+      saveBackupManifest(backupDir, { 
         timestamp: new Date().toISOString(), 
         category: 'PATH Backup', 
         type: 'env', 
         files: [] 
-      }), 'utf8');
+      });
 
       // 2. Write new PATH safely using temp file redirection to avoid injection/escaping bugs
       const tempPathFile = path.join(os.tmpdir(), 'new-path.txt');

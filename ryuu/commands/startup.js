@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { runPowerShellCapture } = require('../lib/shell');
 const { HOLDING_DIR } = require('../config');
-const { moveToHolding } = require('../lib/vault');
+const { moveToHolding, saveBackupManifest } = require('../lib/vault');
 
 module.exports = {
   name: '/startup',
@@ -20,19 +20,52 @@ module.exports = {
     const result = await context.runTask("Querying startup applications", async () => {
       const script = `
         $items = Get-CimInstance Win32_StartupCommand -ErrorAction SilentlyContinue | ForEach-Object {
-            $impact = "Medium"
-            if ($_.Command -match "Discord|Steam|EpicGames|Spotify") { $impact = "High" }
-            elseif ($_.Command -match "OneDrive|Teams|Skype") { $impact = "Medium" }
-            else { $impact = "Low" }
+            $name = $_.Name
+            $location = $_.Location
             
-            [PSCustomObject]@{
-                Name = $_.Name
-                Command = $_.Command
-                Location = $_.Location
-                Impact = $impact
+            # Check if disabled in Windows Explorer StartupApproved (override check)
+            $isDisabled = $false
+            if ($location -match "Startup") {
+                $approvedPath = if ($location -like "*Common*") { 
+                    "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\StartupFolder" 
+                } else { 
+                    "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\StartupFolder" 
+                }
+                if (Test-Path $approvedPath) {
+                    $val = Get-ItemProperty -Path $approvedPath -Name "$name.lnk" -ErrorAction SilentlyContinue
+                    if ($val) {
+                        if ($val."$name.lnk"[0] -ne 2) { $isDisabled = $true }
+                    }
+                }
+            } else {
+                $approvedPath = if ($location -like "*HKLM*") { 
+                    "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run" 
+                } else { 
+                    "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run" 
+                }
+                if (Test-Path $approvedPath) {
+                    $val = Get-ItemProperty -Path $approvedPath -Name $name -ErrorAction SilentlyContinue
+                    if ($val) {
+                        if ($val."$name"[0] -ne 2) { $isDisabled = $true }
+                    }
+                }
+            }
+            
+            if (-not $isDisabled) {
+                $impact = "Medium"
+                if ($_.Command -match "Discord|Steam|EpicGames|Spotify") { $impact = "High" }
+                elseif ($_.Command -match "OneDrive|Teams|Skype") { $impact = "Medium" }
+                else { $impact = "Low" }
+                
+                [PSCustomObject]@{
+                    Name = $_.Name
+                    Command = $_.Command
+                    Location = $_.Location
+                    Impact = $impact
+                }
             }
         }
-        $items | ConvertTo-Json
+        $items | Where-Object { $_ } | ConvertTo-Json
       `;
       const res = await runPowerShellCapture(script);
       return res.stdout;
@@ -49,7 +82,7 @@ module.exports = {
     } catch (e) {}
 
     if (startupItems.length === 0) {
-      console.log(`${context.esc.green}✔ No startup applications detected on PATH.${context.esc.reset}\n`);
+      console.log(`${context.esc.green}✔ No active startup applications detected on PATH.${context.esc.reset}\n`);
       return;
     }
 
@@ -90,9 +123,9 @@ module.exports = {
           name: target.Name,
           value: target.Command
         };
-        fs.writeFileSync(path.join(sessionHoldingDir, 'map.json'), JSON.stringify(mapInfo, null, 2), 'utf8');
+        saveBackupManifest(sessionHoldingDir, mapInfo);
 
-        // Delete from Registry
+        // Disable via StartupApproved override key in Registry
         const tempStartupFile = path.join(os.tmpdir(), 'ryoto-startup-info.txt');
         fs.writeFileSync(tempStartupFile, JSON.stringify({ name: target.Name, location: target.Location }), 'utf8');
 
@@ -101,12 +134,23 @@ module.exports = {
           Remove-Item "${tempStartupFile.replace(/\\/g, '\\\\')}" -Force -ErrorAction SilentlyContinue
           $name = $data.name
           $location = $data.location
-          $regPath = if ($location -like "*HKLM*") { "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" } else { "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" }
-          Remove-ItemProperty -Path $regPath -Name $name -Force -ErrorAction Stop
+          
+          $approvedPath = if ($location -like "*HKLM*") {
+              "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run"
+          } else {
+              "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run"
+          }
+          if (-not (Test-Path $approvedPath)) {
+              New-Item -Path (Split-Path $approvedPath) -Name "StartupApproved" -Force -ErrorAction SilentlyContinue | Out-Null
+              New-Item -Path $approvedPath -Force -ErrorAction SilentlyContinue | Out-Null
+          }
+          # Write Windows Standard disabled binary signature
+          $binaryData = [byte[]](0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
+          Set-ItemProperty -Path $approvedPath -Name $name -Value $binaryData -Type Binary -Force -ErrorAction Stop
           Write-Host "SUCCESS"
         `;
 
-        context.startSpinner("Disabling registry startup entry");
+        context.startSpinner("Configuring StartupApproved override");
         const res = await runPowerShellCapture(disableScript);
         context.stopSpinner("Done");
 
@@ -114,7 +158,7 @@ module.exports = {
           success = true;
         }
       } else if (target.Location.includes('Startup')) {
-        // Startup folder shortcut link based startup
+        // Startup folder shortcut link based startup - we move the shortcut to vault
         const shortcutPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup', target.Name + '.lnk');
         
         context.startSpinner("Moving startup shortcut to holding vault");
@@ -126,7 +170,7 @@ module.exports = {
         } else {
           console.log(`${context.esc.red}Startup shortcut file not found at ${shortcutPath}.${context.esc.reset}`);
         }
-        fs.writeFileSync(path.join(sessionHoldingDir, 'map.json'), JSON.stringify(mapInfo, null, 2), 'utf8');
+        saveBackupManifest(sessionHoldingDir, mapInfo);
         context.stopSpinner("Done");
       }
 

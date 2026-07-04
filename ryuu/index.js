@@ -53,6 +53,68 @@ const State = {
 };
 let currentState = State.MENU;
 
+let animTick = 0;
+let animInterval = null;
+
+function startBannerAnimation() {
+  if (animInterval) return;
+  animInterval = setInterval(() => {
+    if (currentState !== State.MENU) return;
+    
+    animTick++;
+    const chars = "abcdef0123456789!@#$%&*";
+    
+    // Scramble key: 8 random characters
+    let keyVal = "";
+    for (let i = 0; i < 8; i++) {
+      keyVal += chars[Math.floor(Math.random() * chars.length)];
+    }
+    
+    // Toggle active state between encrypting and decrypting
+    const phase = Math.floor(animTick / 10) % 2; // alternates every 2 seconds (10 ticks * 200ms)
+    
+    const encColor = phase === 0 ? esc.green + esc.bold : esc.dim;
+    const decColor = phase === 1 ? esc.cyan + esc.bold : esc.dim;
+    
+    // Status symbol cycle
+    const syms = ["■", "▢", "▣", "▤", "▥", "▦", "▧", "▨", "▩", "▪", "▫"];
+    const activeSym = syms[animTick % syms.length];
+    const statusColor = phase === 0 ? esc.green : esc.cyan;
+    
+    const offset = menuOptions.length;
+    
+    // Save current cursor position, write, and restore
+    process.stdout.write(esc.hideCursor + "\x1b[s");
+    
+    const line2 = "  CIPHER ENGINE".padEnd(23, " ");
+    process.stdout.write(`\x1b[${13 + offset}A\x1b[47C ${esc.reset}${esc.bold}${line2}${esc.reset}${esc.cyan}│\x1b[u`);
+    
+    const line3 = "  [ ENCRYPTING ]".padEnd(23, " ");
+    process.stdout.write(`\x1b[${12 + offset}A\x1b[47C ${esc.reset}${encColor}${line3}${esc.reset}${esc.cyan}│\x1b[u`);
+    
+    const line4 = `   Key: ${keyVal}`.padEnd(23, " ");
+    process.stdout.write(`\x1b[${11 + offset}A\x1b[47C ${esc.reset}${line4}${esc.reset}${esc.cyan}│\x1b[u`);
+    
+    const line5 = "  [ DECRYPTING ]".padEnd(23, " ");
+    process.stdout.write(`\x1b[${10 + offset}A\x1b[47C ${esc.reset}${decColor}${line5}${esc.reset}${esc.cyan}│\x1b[u`);
+    
+    const line6 = `   Status: ${activeSym} RUNNING`.padEnd(23, " ");
+    process.stdout.write(`\x1b[${9 + offset}A\x1b[47C ${esc.reset}${statusColor}${line6}${esc.reset}${esc.cyan}│\x1b[u`);
+    
+    const line7 = "   System: SECURED".padEnd(23, " ");
+    process.stdout.write(`\x1b[${8 + offset}A\x1b[47C ${esc.reset}${esc.green}${line7}${esc.reset}${esc.cyan}│\x1b[u`);
+    
+    process.stdout.write(esc.showCursor);
+  }, 200);
+}
+
+function stopBannerAnimation() {
+  if (animInterval) {
+    clearInterval(animInterval);
+    animInterval = null;
+  }
+}
+
 function transitionTo(state) {
   currentState = state;
   if (state === State.MENU) {
@@ -60,41 +122,50 @@ function transitionTo(state) {
       process.stdin.setRawMode(true);
       process.stdin.resume();
     }
+    startBannerAnimation();
   } else {
+    stopBannerAnimation();
     if (process.stdin.isTTY) {
       process.stdin.setRawMode(false);
     }
   }
 }
 
-// ---------------- DYNAMIC COMMANDS REGISTRY ----------------
+// ---------------- STATIC COMMANDS REGISTRY ----------------
 const commands = {};
 const menuOptions = [];
 
+const COMMAND_MODULES = [
+  require('./commands/advisor'),
+  require('./commands/benchmark'),
+  require('./commands/clean'),
+  require('./commands/disk'),
+  require('./commands/doctor'),
+  require('./commands/duplicates'),
+  require('./commands/env'),
+  require('./commands/export'),
+  require('./commands/git'),
+  require('./commands/info'),
+  require('./commands/network'),
+  require('./commands/ports'),
+  require('./commands/processes'),
+  require('./commands/scan'),
+  require('./commands/snapshot'),
+  require('./commands/startup'),
+  require('./commands/uninstall'),
+  require('./commands/update'),
+  require('./commands/wifi')
+];
+
 function registerCommands() {
-  const commandsDir = path.join(__dirname, 'commands');
-  try {
-    if (fs.existsSync(commandsDir)) {
-      const files = fs.readdirSync(commandsDir);
-      files.forEach(file => {
-        if (file.endsWith('.js')) {
-          try {
-            const cmd = require(path.join(commandsDir, file));
-            commands[cmd.name] = cmd;
-            menuOptions.push({
-              name: cmd.menuName,
-              desc: cmd.desc,
-              cmd: cmd.name
-            });
-          } catch (err) {
-            console.error(`\x1b[31m[ERROR] Failed to load command file "${file}": ${err.message}\x1b[0m`);
-          }
-        }
-      });
-    }
-  } catch (e) {
-    console.error("Failed to read commands directory: " + e.message);
-  }
+  COMMAND_MODULES.forEach(cmd => {
+    commands[cmd.name] = cmd;
+    menuOptions.push({
+      name: cmd.menuName,
+      desc: cmd.desc,
+      cmd: cmd.name
+    });
+  });
 
   // Add exit option to menu dynamically
   menuOptions.push({
@@ -425,6 +496,7 @@ if (args.includes('--version') || args.includes('-v')) {
 
 // Global safety restore handlers for unexpected errors to prevent stuck raw-mode terminal states
 process.on('uncaughtException', (err) => {
+  stopBannerAnimation();
   if (process.stdin.isTTY) {
     try { process.stdin.setRawMode(false); } catch (e) {}
   }
@@ -434,6 +506,7 @@ process.on('uncaughtException', (err) => {
 });
 
 process.on('unhandledRejection', (reason) => {
+  stopBannerAnimation();
   if (process.stdin.isTTY) {
     try { process.stdin.setRawMode(false); } catch (e) {}
   }
@@ -443,6 +516,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 process.on('SIGINT', () => {
+  stopBannerAnimation();
   if (activeChildProcess) {
     try { activeChildProcess.kill('SIGTERM'); } catch (e) {}
   }
