@@ -68,3 +68,19 @@ This document logs the successful execution of all four passes outlined in the s
 * **Open Ports Security Flagging:** Integrated a dictionary of high-risk/suspicious ports (such as RDP 3389, SMB 445, Metasploit 4444, Back Orifice 31337, etc.) directly into `/ports` to automatically highlight them in yellow/red warnings and provide recommendations.
 * **System Process Safety Blocks:** Implemented strict safety rules in `/ports` to block users from terminating critical Windows components (such as PID 4 System, PID 0 Idle, or services like svchost, lsass, wininit, csrss, smss), eliminating any chance of accidental Blue Screens (BSOD) or reboots.
 * **Static Import Registry:** Transitioned the core module loader in `index.js` to a static import registry to clear dynamic loading alerts on security analyzers (Socket.dev).
+
+---
+
+### v1.1.7 Roadmap & Integration Backlog (Active)
+* Upcoming features under development:
+  * Google Gemini Codebase Assistant (`/ask`)
+  * Python Environment & Package Advisor (`/python`)
+  * Zero-Dependency NPM Auto-Updater Check
+  * Tiny Arguments Parser
+  * Auto-Reveal in File Explorer (`explorer.exe /select`)
+  * Interactive Directory Navigation in `/disk`
+  * Recycle Bin Purging in `/clean`
+  * Performance Report Exporting in `/benchmark`
+  * Advanced Battery Reports (`/battery-report`)
+  * Hosts File & Telemetry Manager (`/hosts`)
+  * Wi-Fi QR Code Sharer (`/wifi-share`)
