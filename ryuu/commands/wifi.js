@@ -174,7 +174,7 @@ module.exports = {
     <h1>🐉 Ryoto Wi-Fi Sharing</h1>
     <p>Scan this QR code with your phone's camera to connect instantly to:</p>
     <h2>${ssid}</h2>
-    <img src="https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=WIFI:S:${encodeURIComponent(ssid)};T:${authType};P:${encodeURIComponent(cleanPassword)};;" alt="Wi-Fi QR Code">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=WIFI:S:${encodeURIComponent(ssid)};T:${authType};P:${encodeURIComponent(cleanPassword)};;" alt="Wi-Fi QR Code">
     <p>Security: ${isNopass ? 'None' : 'WPA/WPA2'}</p>
   </div>
 </body>
