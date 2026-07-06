@@ -71,16 +71,20 @@ This document logs the successful execution of all four passes outlined in the s
 
 ---
 
-### v1.1.7 Roadmap & Integration Backlog (Active)
-* Upcoming features under development:
-  * Google Gemini & NVIDIA Codebase Assistant (`/ask`)
-  * Python Environment & Package Advisor (`/python`)
-  * Zero-Dependency NPM Auto-Updater Check
-  * Tiny Arguments Parser
-  * Auto-Reveal in File Explorer (`explorer.exe /select`)
-  * Interactive Directory Navigation in `/disk`
-  * Recycle Bin Purging in `/clean`
-  * Performance Report Exporting in `/benchmark`
-  * Advanced Battery Reports (`/battery-report`)
-  * Hosts File & Telemetry Manager (`/hosts`)
-  * Wi-Fi QR Code Sharer (`/wifi-share`)
+### v1.1.7 Zero-Dependency Feature Release (Active)
+* **Zero-Dependency NPM Auto-Updater Check:** Integrates a background query on boot to check the NPM registry for new versions of `@rahulrc48/ryoto` and print a clean update suggestion on exit.
+* **Tiny Arguments Parser & Direct Runner:** Created a native flag and arguments parser (`parseArgs`) to extract parameters like `--dry-run` or `--fix` without external dependencies. Allows users to run commands directly from the console (e.g. `ryoto clean --dry-run`).
+* **Auto-Reveal in File Explorer:** Added a shared helper (`revealInExplorer`) that automatically opens Windows File Explorer with the generated output file highlighted using native `explorer.exe /select` commands.
+* **Git Remote Safety Verification:** Configured `/git`'s Quick Commit & Push option to check for active remotes before pushing, prompting users to link a remote origin or fallback to local-only commits gracefully.
+* **Interactive Disk Directory Navigation:** Upgraded `/disk`'s analysis results to let users enter an index (1-10) to recursively "drill down" into subdirectories or type ".." to go up, acting like a CLI-based tree size explorer.
+* **Recycle Bin Purger:** Integrated native `Clear-RecycleBin` cleaning commands directly into the `/clean` quick system purge.
+* **Benchmark Report Export:** Exports benchmark hardware ratings to a custom Markdown report (`Ryoto-Performance-Report.md`) on the user's Desktop and reveals it.
+* **Advanced Battery Life Reports (`/battery`):** Compiles Windows battery statistics using `powercfg /batteryreport`, extracts capacity wear and charge cycles to display in the CLI, and saves a detailed report on the Desktop.
+* **Developer Hosts File & Telemetry Manager (`/hosts`):** Allows viewing active hosts, adding/removing local domain mappings (with automatic backup restoration safety), and blocking standard Windows telemetry trackers.
+* **Wi-Fi QR Code Sharer (`/wifi`):** Generates a standard Wi-Fi sharing schema and writes a beautiful local HTML page on the Desktop with a QR Code for phone scanning to connect instantly.
+
+---
+
+### Future Backlog (Deferred)
+* Google Gemini & NVIDIA Codebase Assistant (`/ask`)
+* Python Environment & Package Advisor (`/python`)

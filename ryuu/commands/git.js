@@ -83,10 +83,36 @@ module.exports = {
             console.log(`${context.esc.red}Commit message cannot be empty.${context.esc.reset}`);
             break;
           }
+
+          const remoteCheck = await runPowerShellCapture('git remote', { cwd: repoPath });
+          const hasRemote = remoteCheck.stdout.trim().length > 0;
+
+          if (!hasRemote) {
+            console.log(`\n${context.esc.yellow}⚠️ No remote repository configured for this local Git repo.${context.esc.reset}`);
+            const remoteUrl = await context.askQuestion(`Enter remote origin URL to link (or press Enter to commit locally only): `);
+            if (remoteUrl.trim()) {
+              console.log(`Linking remote origin: ${remoteUrl.trim()}...`);
+              await runPowerShellCapture(`git remote add origin ${remoteUrl.trim()}`, { cwd: repoPath });
+            }
+          }
+
           const tempMsgPath = path.join(os.tmpdir(), 'git-commit-msg.txt');
           fs.writeFileSync(tempMsgPath, commitMsg, 'utf8');
-          console.log(`Staging, committing, and pushing...`);
-          await context.runPowerShell(`git add .; git commit -F "${tempMsgPath.replace(/\\/g, '\\\\')}"; git push; Remove-Item "${tempMsgPath.replace(/\\/g, '\\\\')}" -Force -ErrorAction SilentlyContinue`, { cwd: repoPath });
+          console.log(`\nStaging and committing...`);
+          await context.runPowerShell(`git add .; git commit -F "${tempMsgPath.replace(/\\/g, '\\\\')}"; Remove-Item "${tempMsgPath.replace(/\\/g, '\\\\')}" -Force -ErrorAction SilentlyContinue`, { cwd: repoPath });
+
+          // Recheck remote destination
+          const postRemoteCheck = await runPowerShellCapture('git remote', { cwd: repoPath });
+          if (postRemoteCheck.stdout.trim().length > 0) {
+            console.log(`Pushing to remote repository...`);
+            // Determine active local branch name
+            const branchCheck = await runPowerShellCapture('git branch --show-current', { cwd: repoPath });
+            const branchName = branchCheck.stdout.trim() || 'master';
+            await context.runPowerShell(`git push -u origin ${branchName}`, { cwd: repoPath });
+          } else {
+            console.log(`\n${context.esc.green}✔ Staged and committed locally!${context.esc.reset}`);
+            console.log(`💡 To push to GitHub later, configure your remote using: git remote add origin <url>`);
+          }
           break;
         case '3':
           await context.runPowerShell('git log -n 5 --oneline', { cwd: repoPath });

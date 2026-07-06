@@ -85,7 +85,8 @@ module.exports = {
       { name: 'Conda Cache Packages', path: path.join(userHome, 'anaconda3', 'Scripts', 'conda.exe'), isConda: true },
       { name: 'Phone Link CrossDevice Cache', path: path.join(userHome, 'CrossDevice') },
       { name: 'User System Temp files', path: os.tmpdir(), isTemp: true, envVar: '$env:TEMP' },
-      { name: 'Windows Root Temp files', path: path.join(process.env.SystemRoot || 'C:\\Windows', 'Temp'), isTemp: true, envVar: '$env:SystemRoot\\Temp' }
+      { name: 'Windows Root Temp files', path: path.join(process.env.SystemRoot || 'C:\\Windows', 'Temp'), isTemp: true, envVar: '$env:SystemRoot\\Temp' },
+      { name: 'Windows Recycle Bin', isRecycle: true }
     ];
 
     if (dryRun) {
@@ -97,7 +98,7 @@ module.exports = {
       }
       console.log(`\nCaches that would be permanently deleted:`);
       cacheDirectories.forEach(c => {
-        console.log(`  -> ${c.name}: ${c.path}`);
+        console.log(`  -> ${c.name}${c.path ? ': ' + c.path : ' (All Drives)'}`);
       });
       console.log(`\n${context.esc.green}[DRY RUN] Simulation finished. No files were modified.${context.esc.reset}\n`);
       return;
@@ -135,6 +136,10 @@ module.exports = {
             Get-ChildItem -Path "${c.envVar}" -ErrorAction SilentlyContinue | ForEach-Object {
                 Remove-Item $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
             }
+          `;
+        } else if (c.isRecycle) {
+          deleteCommands += `
+            Clear-RecycleBin -Force -ErrorAction SilentlyContinue
           `;
         } else {
           deleteCommands += `

@@ -6,9 +6,9 @@ Built with Node.js and native PowerShell hooks, Ryoto starts instantly, uses zer
 
 ---
 
-## 🔒 Security Hardened in v1.1.6
+## 🔒 Security Hardened in v1.1.7
 
-Ryoto is designed from the ground up with a focus on safety and transparency. Version **1.1.6** includes critical security hardening enhancements:
+Ryoto is designed from the ground up with a focus on safety and transparency. Version **1.1.7** includes critical security hardening enhancements:
 * **🔑 Cryptographic Manifest Signatures:** All backup manifests (`map.json`) are signed at creation using a SHA-256 HMAC generated with a persistent, machine-unique private key. Restorations check this signature to block any execution of tampered or untrusted backup artifacts.
 * **🛡️ Strict Path & Registry Restorations:** All vault restores (`/clean --restore`) validate restore target paths. Registry key restorations are allowlisted strictly to standard startup locations, preventing any possibility of malicious persistence or directory traversal attacks.
 * **🧼 Log Data Redaction:** System error logs (`~/.ryoto/logs/last-error.log`) automatically mask and sanitize command arguments. Sensitive information like Wi-Fi SSID profiles and passwords are redacted at the source.

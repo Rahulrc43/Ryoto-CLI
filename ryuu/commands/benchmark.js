@@ -100,5 +100,48 @@ module.exports = {
     else if (totalScore > 600) { tier = "Pro Gaming Edition"; }
     console.log(`  System Tier Class    : ${context.esc.hiCyan}${tier}${context.esc.reset}`);
     console.log(`${context.esc.cyan}└─────────────────────────────────────────────────────────────────────┘${context.esc.reset}\n`);
+
+    // 4. Save report option
+    const saveReport = await context.askQuestion(`Do you want to save this performance report as a Markdown file on your Desktop? (y/n): `);
+    if (saveReport.toLowerCase() === 'y' || saveReport.toLowerCase() === 'yes') {
+      const desktopDir = path.join(os.homedir(), 'Desktop');
+      const targetDir = fs.existsSync(desktopDir) ? desktopDir : os.homedir();
+      const reportName = `Ryoto-Performance-Report.md`;
+      const reportPath = path.join(targetDir, reportName);
+
+      const sysInfo = `# 🐉 Ryoto Hardware Performance Report
+Generated on: ${new Date().toLocaleString()}
+
+## 💻 System Configuration
+- **Operating System** : ${os.type()} ${os.release()} (${os.arch()})
+- **CPU Model**        : ${os.cpus()[0].model} (${os.cpus().length} threads)
+- **Total Memory**     : ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(1)} GB
+- **Free Memory**      : ${(os.freemem() / 1024 / 1024 / 1024).toFixed(1)} GB
+
+## ⚡ Performance Results
+- **Synthetic CPU Calculation Time** : ${cpuTimeMs.toFixed(1)} ms (Rating: **${cpuScore}**)
+- **Disk Write Speed**             : ${writeSpeedMBs} MB/s (${writeTimeMs.toFixed(1)} ms)
+- **Disk Read Speed**              : ${readSpeedMBs} MB/s (${readTimeMs.toFixed(1)} ms)
+- **Synthetic Disk Rating**        : **${diskScore}**
+
+## 🏆 Overall Rating
+- **Total Performance Score** : **${totalScore} Points**
+- **System Tier Class**       : **${tier}**
+
+---
+*Created by Ryoto CLI System Optimizer*
+`;
+      try {
+        fs.writeFileSync(reportPath, sysInfo, 'utf8');
+        console.log(`${context.esc.green}✔ Performance report saved to: ${reportPath}${context.esc.reset}`);
+        
+        // Auto-reveal in explorer
+        const { revealInExplorer } = require('../lib/helpers');
+        revealInExplorer(reportPath);
+        console.log(`${context.esc.cyan}Opening File Explorer...${context.esc.reset}\n`);
+      } catch (err) {
+        console.error(`${context.esc.red}Failed to save report: ${err.message}${context.esc.reset}\n`);
+      }
+    }
   }
 };

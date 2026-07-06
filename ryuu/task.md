@@ -24,37 +24,32 @@
 
 ---
 
-- [ ] Upcoming v1.1.7 Roadmap
-  - [ ] `commands/git.js`: Remote verification for Quick Commit & Push
-    - [ ] Check if `git remote` exists before attempting push.
-    - [ ] Warn if no remote is configured, offer to link origin URL (`git remote add origin`).
-    - [ ] Support local-only committing fallback.
-  - [ ] `commands/ask.js`: Google Gemini & NVIDIA Codebase Assistant (`/ask`)
-    - [ ] Prompt and securely store Gemini/NVIDIA API keys in local config files.
-    - [ ] Scan and compile local workspace text files (excluding `node_modules` and `.git`).
-    - [ ] Send codebase files as context (leveraging Gemini's massive 2M context window for a zero-setup local RAG).
-    - [ ] Create an interactive query loop to ask questions, explain code, or request refactoring.
-  - [ ] `lib/helpers.js`: Zero-Dependency NPM Auto-Updater Check
-    - [ ] Query NPM registry in the background (`https://registry.npmjs.org/@rahulrc48/ryoto/latest`).
-    - [ ] Compare local package.json version with registry version and display update recommendations.
-  - [ ] `lib/helpers.js`: Tiny Arguments Parser
-    - [ ] Parse CLI flags (e.g. `--fix`, `-d`, `--path=val`) without using external libraries like `yargs` or `minimist`.
-  - [ ] Upcoming v1.1.7 UX & Output Backlog
-    - [ ] `lib/helpers.js`: Auto-Reveal in File Explorer
-      - [ ] Launch `explorer.exe /select,"<path>"` after generating zips/backups to highlight output files.
-    - [ ] `commands/ports.js` / `commands/git.js` / `/compress`: Centralized Outputs
-      - [ ] Redirect user-facing outputs to `%USERPROFILE%\Desktop` or a structured `~/.ryoto/outputs/` directory.
-    - [ ] `commands/disk.js`: Interactive Directory Navigation
-      - [ ] Drill down into subdirectories from the Top 10 largest folders list dynamically.
-    - [ ] `commands/clean.js`: Recycle Bin Cleaner
-      - [ ] Add native PowerShell `Clear-RecycleBin` support to quick clean.
-    - [ ] `commands/benchmark.js`: Performance Report Export
-      - [ ] Export hardware benchmarks to a shareable markdown report file.
-  - [ ] Upcoming v1.1.7 Diagnostic Backlog
-    - [ ] `commands/battery.js`: Advanced Battery Life Analytics (/battery-report)
-      - [ ] Generate native HTML battery reports using powercfg and extract charge cycles.
-    - [ ] `commands/hosts.js`: Developer Hosts File & Telemetry Manager (/hosts)
-      - [ ] Add interactive hosts domain entries editing and telemetry blocking.
-    - [ ] `commands/wifi.js` / `/wifi-share`: Wi-Fi QR Code Sharer
-      - [ ] Generate Wi-Fi configuration QR code images/ASCII displays for easy phone scans.
+- [x] Upcoming v1.1.7 Roadmap
+  - [x] `commands/git.js`: Remote verification for Quick Commit & Push
+    - [x] Check if `git remote` exists before attempting push.
+    - [x] Warn if no remote is configured, offer to link origin URL (`git remote add origin`).
+    - [x] Support local-only committing fallback.
+  - [x] `lib/helpers.js`: Zero-Dependency NPM Auto-Updater Check
+    - [x] Query NPM registry in the background (`https://registry.npmjs.org/@rahulrc48/ryoto/latest`).
+    - [x] Compare local package.json version with registry version and display update recommendations.
+  - [x] `lib/helpers.js`: Tiny Arguments Parser
+    - [x] Parse CLI flags (e.g. `--fix`, `-d`, `--path=val`) without using external libraries like `yargs` or `minimist`.
+  - [x] Upcoming v1.1.7 UX & Output Backlog
+    - [x] `lib/helpers.js`: Auto-Reveal in File Explorer
+      - [x] Launch `explorer.exe /select,"<path>"` after generating zips/backups to highlight output files.
+    - [x] `commands/ports.js` / `commands/git.js` / `/compress`: Centralized Outputs
+      - [x] Redirect user-facing outputs to `%USERPROFILE%\Desktop` or a structured `~/.ryoto/outputs/` directory.
+    - [x] `commands/disk.js`: Interactive Directory Navigation
+      - [x] Drill down into subdirectories from the Top 10 largest folders list dynamically.
+    - [x] `commands/clean.js`: Recycle Bin Cleaner
+      - [x] Add native PowerShell `Clear-RecycleBin` support to quick clean.
+    - [x] `commands/benchmark.js`: Performance Report Export
+      - [x] Export hardware benchmarks to a shareable markdown report file.
+  - [x] Upcoming v1.1.7 Diagnostic Backlog
+    - [x] `commands/battery.js`: Advanced Battery Life Analytics (/battery-report)
+      - [x] Generate native HTML battery reports using powercfg and extract charge cycles.
+    - [x] `commands/hosts.js`: Developer Hosts File & Telemetry Manager (/hosts)
+      - [x] Add interactive hosts domain entries editing and telemetry blocking.
+    - [x] `commands/wifi.js` / `/wifi-share`: Wi-Fi QR Code Sharer
+      - [x] Generate Wi-Fi configuration QR code images/ASCII displays for easy phone scans.
   - [ ] Backlog of new features (To be specified by User)

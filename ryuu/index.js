@@ -9,6 +9,10 @@ const { loadConfig } = require('./config');
 const stats = require('./lib/stats');
 const pkg = require('./package.json');
 const { killAllProcesses } = require('./lib/shell');
+const { checkNpmUpdate, getUpdateMessage, parseArgs } = require('./lib/helpers');
+
+// Start checking for updates in background
+checkNpmUpdate(pkg.version);
 
 // ANSI escape codes for formatting and rich color palettes
 const esc = {
@@ -137,6 +141,7 @@ const menuOptions = [];
 
 const COMMAND_MODULES = [
   require('./commands/advisor'),
+  require('./commands/battery'),
   require('./commands/benchmark'),
   require('./commands/clean'),
   require('./commands/disk'),
@@ -145,6 +150,7 @@ const COMMAND_MODULES = [
   require('./commands/env'),
   require('./commands/export'),
   require('./commands/git'),
+  require('./commands/hosts'),
   require('./commands/info'),
   require('./commands/network'),
   require('./commands/ports'),
@@ -273,6 +279,10 @@ function printExitSummary() {
   console.log(`  Scans Executed      : ${esc.bold}${stats.scansRun}${esc.reset} runs`);
   console.log(`${esc.cyan}└─────────────────────────────────────────────────────────────────────┘${esc.reset}`);
   console.log(`\n${esc.hiCyan}Thank you for using Ryoto. Keep coding!${esc.reset}\n`);
+  const updateMsg = getUpdateMessage();
+  if (updateMsg) {
+    console.log(updateMsg);
+  }
 }
 
 function printAsciiArt() {
@@ -479,21 +489,6 @@ function initInteractiveMenu() {
   });
 }
 
-// ---------------- ARGUMENT CONTROLLER ----------------
-const args = process.argv.slice(2);
-if (args.includes('--help') || args.includes('-h')) {
-  console.log(`\n${esc.bold}Ryoto CLI Usage Guidelines:${esc.reset}`);
-  console.log(`  ryoto                - Launch interactive keyboard arrow selection menu`);
-  console.log(`  ryoto --version, -v  - View current utility version`);
-  console.log(`  ryoto --help, -h     - View command line help guidelines\n`);
-  process.exit(0);
-}
-
-if (args.includes('--version') || args.includes('-v')) {
-  console.log(`ryoto version ${pkg.version}`);
-  process.exit(0);
-}
-
 // Global safety restore handlers for unexpected errors to prevent stuck raw-mode terminal states
 process.on('uncaughtException', (err) => {
   stopBannerAnimation();
@@ -529,5 +524,52 @@ process.on('SIGINT', () => {
   process.exit(130);
 });
 
-// Start application
-initInteractiveMenu();
+// ---------------- ARGUMENT CONTROLLER ----------------
+const args = process.argv.slice(2);
+const parsedFlags = parseArgs(args);
+
+if (args.includes('--help') || args.includes('-h')) {
+  console.log(`\n${esc.bold}Ryoto CLI Usage Guidelines:${esc.reset}`);
+  console.log(`  ryoto                - Launch interactive keyboard arrow selection menu`);
+  console.log(`  ryoto [command]      - Run a specific command directly (e.g. ryoto clean)`);
+  console.log(`  ryoto --version, -v  - View current utility version`);
+  console.log(`  ryoto --help, -h     - View command line help guidelines\n`);
+  process.exit(0);
+}
+
+if (args.includes('--version') || args.includes('-v')) {
+  console.log(`ryoto version ${pkg.version}`);
+  process.exit(0);
+}
+
+// Check if a direct command command was passed
+const commandName = args[0] && !args[0].startsWith('-') ? args[0] : null;
+
+if (commandName) {
+  const actualCmd = commandName.startsWith('/') ? commandName : '/' + commandName;
+  if (commands[actualCmd]) {
+    (async () => {
+      const context = {
+        esc,
+        runPowerShell,
+        askQuestion,
+        startSpinner,
+        stopSpinner,
+        runTask,
+        isTerminalMode: false
+      };
+      try {
+        await commands[actualCmd].run(context, args.slice(1));
+      } catch (err) {
+        console.error(`${esc.red}Error executing command: ${err.message}${esc.reset}`);
+      }
+      process.exit(0);
+    })();
+  } else {
+    console.error(`\x1b[31mError: Command "${commandName}" not found. Type "ryoto --help" for usage.\x1b[0m`);
+    process.exit(1);
+  }
+} else {
+  // Start application in interactive menu mode
+  initInteractiveMenu();
+}

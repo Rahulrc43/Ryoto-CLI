@@ -115,5 +115,89 @@ module.exports = {
     } else {
       console.log(`\n${context.esc.cyan}Passwords kept masked for security.${context.esc.reset}\n`);
     }
+
+    const qrShare = await context.askQuestion(`Would you like to generate a Wi-Fi Sharing QR Code for one of these networks? (y/n): `);
+    if (qrShare.toLowerCase() === 'y' || qrShare.toLowerCase() === 'yes') {
+      console.log(`\nAvailable profiles:`);
+      profiles.forEach((p, index) => {
+        console.log(`  [${index + 1}] ${p}`);
+      });
+      
+      const choice = await context.askQuestion(`\nSelect profile number to share (1-${profiles.length}): `);
+      const idx = parseInt(choice) - 1;
+      if (idx >= 0 && idx < profiles.length) {
+        const ssid = profiles[idx];
+        context.startSpinner(`Decrypting profile key for "${ssid}"`);
+        const password = await getWifiPassword(ssid);
+        context.stopSpinner("Ready");
+
+        const desktopDir = path.join(os.homedir(), 'Desktop');
+        const targetDir = fs.existsSync(desktopDir) ? desktopDir : os.homedir();
+        const cleanSsid = ssid.replace(/[^a-zA-Z0-9]/g, '_');
+        const qrPath = path.join(targetDir, `Ryoto-WiFi-QR-${cleanSsid}.html`);
+
+        const isNopass = password === "[Open Network / No Password]";
+        const authType = isNopass ? "nopass" : "WPA";
+        const cleanPassword = isNopass ? "" : password;
+        
+        const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Ryoto Wi-Fi QR Code Sharer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      text-align: center;
+      padding: 50px;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background-color: #1e1e1e;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    h1 { color: #00ffff; }
+    img {
+      border: 10px solid #ffffff;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    p { color: #aaaaaa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🐉 Ryoto Wi-Fi Sharing</h1>
+    <p>Scan this QR code with your phone's camera to connect instantly to:</p>
+    <h2>${ssid}</h2>
+    <img src="https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=WIFI:S:${encodeURIComponent(ssid)};T:${authType};P:${encodeURIComponent(cleanPassword)};;" alt="Wi-Fi QR Code">
+    <p>Security: ${isNopass ? 'None' : 'WPA/WPA2'}</p>
+  </div>
+</body>
+</html>
+`;
+        try {
+          fs.writeFileSync(qrPath, htmlContent, 'utf8');
+          console.log(`${context.esc.green}✔ Wi-Fi QR Code HTML saved to: ${qrPath}${context.esc.reset}`);
+          
+          // Auto-reveal in explorer
+          const { revealInExplorer } = require('../lib/helpers');
+          revealInExplorer(qrPath);
+
+          // Open in default browser
+          const { spawn } = require('child_process');
+          spawn('cmd.exe', ['/c', 'start', '', qrPath], { detached: true, stdio: 'ignore' }).unref();
+          console.log(`${context.esc.cyan}Opening QR Code in browser...${context.esc.reset}\n`);
+        } catch (err) {
+          console.error(`${context.esc.red}Failed to save QR Code file: ${err.message}${context.esc.reset}\n`);
+        }
+      } else {
+        console.log(`${context.esc.red}Invalid selection.${context.esc.reset}\n`);
+      }
+    }
   }
 };
