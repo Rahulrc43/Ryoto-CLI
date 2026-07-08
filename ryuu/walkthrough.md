@@ -80,11 +80,16 @@ This document logs the successful execution of all four passes outlined in the s
 * **Recycle Bin Purger:** Integrated native `Clear-RecycleBin` cleaning commands directly into the `/clean` quick system purge.
 * **Benchmark Report Export:** Exports benchmark hardware ratings to a custom Markdown report (`Ryoto-Performance-Report.md`) on the user's Desktop and reveals it.
 * **Advanced Battery Life Reports (`/battery`):** Compiles Windows battery statistics using `powercfg /batteryreport`, extracts capacity wear and charge cycles to display in the CLI, and saves a detailed report on the Desktop.
-* **Developer Hosts File & Telemetry Manager (`/hosts`):** Allows viewing active hosts, adding/removing local domain mappings (with automatic backup restoration safety), and blocking standard Windows telemetry trackers.
 * **Wi-Fi QR Code Sharer (`/wifi`):** Generates a standard Wi-Fi sharing schema and writes a beautiful local HTML page on the Desktop with a QR Code for phone scanning to connect instantly.
+
+---
+
+### v1.1.8 Security Cleanup Release (Active)
+* **Hosts Manager Removal:** Completely removed the `/hosts` command to eliminate hosts file modification triggers and resolve false-positive "Malware" alerts on NPM security scanners (Socket.dev).
 
 ---
 
 ### Future Backlog (Deferred)
 * Google Gemini & NVIDIA Codebase Assistant (`/ask`)
 * Python Environment & Package Advisor (`/python`)
+* Developer Hosts File & Telemetry Manager (`/hosts`)

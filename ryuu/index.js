@@ -150,7 +150,6 @@ const COMMAND_MODULES = [
   require('./commands/env'),
   require('./commands/export'),
   require('./commands/git'),
-  require('./commands/hosts'),
   require('./commands/info'),
   require('./commands/network'),
   require('./commands/ports'),
